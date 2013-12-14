@@ -14,7 +14,8 @@ public class MailBean {
 
 	private Multipart multipart;
 	private int extraItemCounter = 0;
-	private MimeBodyPart[] extraItems= new MimeBodyPart[5];
+	public final int EXTRA_ITEM_CAPACITY = 3;
+	private MimeBodyPart[] extraItems= new MimeBodyPart[EXTRA_ITEM_CAPACITY];
 	private String subject;
 	private String text;
 	private InternetAddress[] receiverAddresses = new InternetAddress[10];
@@ -85,11 +86,11 @@ public class MailBean {
 	}
 
 	public boolean extraItemsFull() {
-		return this.extraItemCounter >= 5;
+		return this.extraItemCounter >= EXTRA_ITEM_CAPACITY;
 	}
 	
 	public void removeAllExtraItems() {
-		this.extraItems = new MimeBodyPart[5];
+		this.extraItems = new MimeBodyPart[EXTRA_ITEM_CAPACITY];
 		this.extraItemCounter = 0;
 	}
 

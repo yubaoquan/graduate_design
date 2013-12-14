@@ -44,7 +44,7 @@ public class Transmitter {
 	
 	public void loginToServer() {
 		try {
-			this.transport.connect(loginInformation.getServerName(), loginInformation.getUserName(), loginInformation.getPassword());
+			this.transport.connect(loginInformation.getSmtpServerName(), loginInformation.getUserName(), loginInformation.getPassword());
 		} catch (AuthenticationFailedException e) {
 			System.out.println("认证失败!用户名或密码错误");
 			this.loginSucceed = false;
@@ -87,7 +87,6 @@ public class Transmitter {
 			closeConnection();
 			return;
 		}
-		
 		this.sendSucceed = true;
 	}
 	
@@ -99,7 +98,6 @@ public class Transmitter {
 				e.printStackTrace();
 			}
 		}
-		
 	}
 	
 	public boolean sendSucceed() {

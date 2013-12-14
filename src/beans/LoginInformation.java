@@ -2,19 +2,20 @@ package beans;
 
 public class LoginInformation {
 
-	private String serverName;
+	private String pop3ServerName;
+	private String smtpServerName;
 	private String userName;
 	private String password;
 	
 	public LoginInformation() {}
 	
 	public LoginInformation(String serverName, String userName, String password) {
-		this.serverName = serverName;
+		this.smtpServerName = serverName;
 		this.userName = userName;
 		this.password = password;
 	}
-	public String getServerName() {
-		return serverName;
+	public String getSmtpServerName() {
+		return smtpServerName;
 	}
 	public String getUserName() {
 		return userName;
@@ -22,14 +23,22 @@ public class LoginInformation {
 	public String getPassword() {
 		return password;
 	}
-	public void setServerName(String serverName) {
-		this.serverName = serverName;
+	public void setSmtpServerName(String serverName) {
+		this.smtpServerName = serverName;
 	}
 	public void setUserName(String userName) {
 		this.userName = userName;
 	}
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public String getPop3ServerName() {
+		return pop3ServerName;
+	}
+
+	public void setPop3ServerName(String pop3ServerName) {
+		this.pop3ServerName = pop3ServerName;
 	}
 	
 }

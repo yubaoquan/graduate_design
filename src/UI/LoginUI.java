@@ -6,6 +6,7 @@ import javax.swing.*;
 
 import beans.LoginInformation;
 
+import thread.LoginThread;
 import utils.LoginUtils;
 
 
@@ -39,14 +40,14 @@ public class LoginUI {
 	private LoginInformation loginInformation = new LoginInformation();
 	
 	public void launch() {
-		this.initUI();
-		this.frame.setVisible(true);
+		initUI();
+		frame.setVisible(true);
 	}
 	
-	private void initUI() {
-		this.setAttributes();
-		this.addComponents();
-		this.frame.setVisible(true);
+	public void initUI() {
+		setAttributes();
+		addComponents();
+		frame.setVisible(true);
 	}
 
 	private void setAttributes() {
@@ -56,60 +57,62 @@ public class LoginUI {
 	}
 
 	private void configureFrame() {
-		this.frame.setLayout(this.frameLayout);
-		this.frame.setLocation(400, 200);
-		this.frame.setSize(500, 350);
-		this.frame.setResizable(false);
-		//this.frame.setVisible(true);
-		this.frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setLayout(frameLayout);
+		frame.setLocation(400, 200);
+		frame.setSize(500, 350);
+		frame.setResizable(false);
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	}
 
 	private void configurePanels() {
-		this.centerPanel.setLayout(this.centerLayout);
-		this.centerPanel.setBorder(BorderFactory.createEtchedBorder());
-		this.southPanel.setLayout(this.southLayout);
-		this.southLayout.setHgap(60);
+		centerPanel.setLayout(centerLayout);
+		centerPanel.setBorder(BorderFactory.createEtchedBorder());
+		southPanel.setLayout(southLayout);
+		southLayout.setHgap(60);
 
-		this.serverNamePanel.setLayout(this.dataLayout);
-		this.userNamePanel.setLayout(this.dataLayout);
-		this.passwordPanel.setLayout(this.dataLayout);
+		serverNamePanel.setLayout(dataLayout);
+		userNamePanel.setLayout(dataLayout);
+		passwordPanel.setLayout(dataLayout);
 	}
 
 	private void configureOthercomponents() {
-		this.serverNameSelector.addItem("");
-		this.serverNameSelector.addItem("163");
-		this.serverNameSelector.addItem("QQ");
-		this.confirmButton.setActionCommand(LoginCommandCode.CONFIRM.toString());
-		this.resetButton.setActionCommand(LoginCommandCode.REST.toString());
+	//	waitingWindow.setVisible(false);
+		serverNameSelector.addItem("");
+		serverNameSelector.addItem("163");
+		serverNameSelector.addItem("QQ");
+		confirmButton.setActionCommand(LoginCommandCode.CONFIRM.toString());
+		resetButton.setActionCommand(LoginCommandCode.REST.toString());
 	}
 
 	private void addComponents() {
-		this.serverNamePanel.add(this.serverNameLabel);
-		this.serverNamePanel.add(this.serverNameSelector);
-		this.userNamePanel.add(this.userNameLabel);
-		this.userNamePanel.add(this.userNameTextField);
-		this.passwordPanel.add(this.passwordLabel);
-		this.passwordPanel.add(this.passwordTextField);
+		serverNamePanel.add(serverNameLabel);
+		serverNamePanel.add(serverNameSelector);
+		userNamePanel.add(userNameLabel);
+		userNamePanel.add(userNameTextField);
+		passwordPanel.add(passwordLabel);
+		passwordPanel.add(passwordTextField);
 		
-		this.confirmButton.addActionListener(this.monitor);
-		this.resetButton.addActionListener(this.monitor);
+		confirmButton.addActionListener(monitor);
+		resetButton.addActionListener(monitor);
 		
-		this.centerPanel.add(this.serverNamePanel);
-		this.centerPanel.add(this.userNamePanel);
-		this.centerPanel.add(this.passwordPanel);
+		centerPanel.add(serverNamePanel);
+		centerPanel.add(userNamePanel);
+		centerPanel.add(passwordPanel);
 		
-		this.southPanel.add(this.confirmButton);
-		this.southPanel.add(this.resetButton);
+		southPanel.add(confirmButton);
+		southPanel.add(resetButton);
 		
-		this.frame.add(this.centerPanel, BorderLayout.CENTER);
-		this.frame.add(this.southPanel, BorderLayout.SOUTH);
+		frame.add(centerPanel, BorderLayout.CENTER);
+		frame.add(southPanel, BorderLayout.SOUTH);
 	}
 
 	/**
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		new LoginUI().initUI();
+		LoginUI loginUI = new LoginUI();
+		LoginThread thread1 = new LoginThread(loginUI);
+		thread1.run();
 	}
 
 	private class LoginUIMonitor implements ActionListener {
@@ -141,12 +144,13 @@ public class LoginUI {
 			if (LoginUtils.loginServerSucceed(loginInformation)) {
 				LoginUtils.selectSendOrReceive(LoginUI.this);
 			} else {
+				LoginUtils.hideWaitingWindow();
 				JOptionPane.showMessageDialog(frame, (String)"登录失败.请确认用户名和密码填写正确并且网络连接正常.", "错误", JOptionPane.WARNING_MESSAGE);
 			}
 		}
 		
 		private boolean informationValid() {
-			if (LoginUI.this.serverNameSelector.getSelectedIndex() == 0) {
+			if (serverNameSelector.getSelectedIndex() == 0) {
 				JOptionPane.showMessageDialog(frame, (String)"请选择邮件服务器.", "错误", JOptionPane.WARNING_MESSAGE);
 				return false;
 			}
@@ -159,19 +163,20 @@ public class LoginUI {
 	}
 
 	private void fillLoginInformation() {
-		this.loginInformation.setServerName(this.getServerNameFromTextField());
-		this.loginInformation.setUserName(this.getUserNameFromTextField());
-		this.loginInformation.setPassword(this.getPasswordFromTextField());
+		loginInformation.setSmtpServerName(getSmtpServerNameFromSelector());
+		loginInformation.setPop3ServerName(getPop3ServerNameFromSelector());
+		loginInformation.setUserName(getUserNameFromTextField());
+		loginInformation.setPassword(getPasswordFromTextField());
 	}
 	
 	public void cleanTextField() {
-		this.serverNameSelector.setSelectedIndex(0);
-		this.userNameTextField.setText("");
-		this.passwordTextField.setText("");
+		serverNameSelector.setSelectedIndex(0);
+		userNameTextField.setText("");
+		passwordTextField.setText("");
 	}
 	
-	public String getServerNameFromTextField() {
-		String selection = (String) this.serverNameSelector.getSelectedItem();
+	public String getSmtpServerNameFromSelector() {
+		String selection = (String) serverNameSelector.getSelectedItem();
 		if (selection.equals("")) {
 			return "";
 		} else {
@@ -179,16 +184,25 @@ public class LoginUI {
 		}
 	}
 	
+	public String getPop3ServerNameFromSelector() {
+		String selection = (String) serverNameSelector.getSelectedItem();
+		if (selection.equals("")) {
+			return "";
+		} else {
+			return "pop." + selection + ".com"; 
+		}
+	}
+	
 	public String getUserNameFromTextField() {
-		return this.userNameTextField.getText();
+		return userNameTextField.getText();
 	}
 	
 	public String getPasswordFromTextField() {
-		return new String(this.passwordTextField.getPassword());
+		return new String(passwordTextField.getPassword());
 	}
 	
 	public void dispose() {
-		this.frame.dispose();
+		frame.dispose();
 	}
 
 	public LoginInformation getLoginInformation() {

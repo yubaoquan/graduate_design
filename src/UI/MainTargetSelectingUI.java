@@ -4,6 +4,8 @@ import java.awt.FlowLayout;
 import java.awt.event.*;
 import javax.swing.*;
 
+import net.ReceiveMail;
+
 import beans.LoginInformation;
 
 
@@ -68,15 +70,24 @@ public class MainTargetSelectingUI {
 					System.exit(-1);
 			}
 		}
-
-		private void onReceiveOptionSelected() {
-			System.out.println("receive");
-		}
-
+		
 		private void onSendOptionSelected() {
-			MainTargetSelectingUI.this.frame.dispose();
-			new EditMailUI(MainTargetSelectingUI.this.loginInformation).launch();
+			frame.dispose();
+			new EditMailUI(loginInformation).launch();
 		}
 		
+		private void onReceiveOptionSelected() {
+			System.out.println("receive");
+			try {
+				ReceiveMail.loginAndReceiveMail(loginInformation);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			//frame.dispose();
+			JOptionPane.showConfirmDialog(null, (String)"邮件接收完成!", "finish", JOptionPane.CLOSED_OPTION);
+			frame.dispose();
+			System.exit(0);
+		}
+
 	}
 }
