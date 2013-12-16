@@ -1,11 +1,32 @@
 package net;
 
-import java.io.*;
-import java.nio.file.Path;
-import java.text.*;
-import java.util.*;
-import javax.mail.*;
-import javax.mail.internet.*;
+import io.MailSaver;
+import io.FileStreamSaver;
+import io.FileWriterSaver;
+
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStream;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Properties;
+
+import javax.mail.BodyPart;
+import javax.mail.Flags;
+import javax.mail.Folder;
+import javax.mail.Message;
+import javax.mail.MessagingException;
+import javax.mail.Multipart;
+import javax.mail.NoSuchProviderException;
+import javax.mail.Part;
+import javax.mail.Session;
+import javax.mail.Store;
+import javax.mail.URLName;
+import javax.mail.internet.InternetAddress;
+import javax.mail.internet.MimeMessage;
+import javax.mail.internet.MimeUtility;
 
 import beans.LoginInformation;
 
@@ -14,17 +35,22 @@ import beans.LoginInformation;
  */
 public class ReceiveMail {
 	private MimeMessage mimeMessage = null;
-	private String saveAttachPath = ""; // 附件下载后的存放目录
+	
 	private StringBuffer bodyText = new StringBuffer();// 存放邮件内容
 	private String dateFormat = "yy-MM-dd HH:mm"; // 默认的日前显示格式
-	private BufferedWriter bw;
-	private FileWriter fw;
 	private static String filePathPrefix;
-
+	private FileStreamSaver fileStreamSaver = null;
+	private FileWriterSaver fileWriterSaver = null;
+	private MailSaver mailSaver = new MailSaver();
+	
 	public ReceiveMail(MimeMessage mimeMessage) {
 		this.mimeMessage = mimeMessage;
 	}
 
+	public ReceiveMail() {
+		
+	}
+	
 	public void setMimeMessage(MimeMessage mimeMessage) {
 		this.mimeMessage = mimeMessage;
 	}
@@ -178,78 +204,6 @@ public class ReceiveMail {
 	}
 
 	/**
-	 * 判断此邮件是否包含附件
-	 */
-	public boolean isContainAttach(Part part) throws Exception {
-		boolean attachFlag = false;
-		String contentType = part.getContentType();
-		if (part.isMimeType("multipart/*")) {
-			Multipart mp = (Multipart) part.getContent();
-			for (int i = 0; i < mp.getCount(); i++) {
-				BodyPart mpart = mp.getBodyPart(i);
-				String disposition = mpart.getDisposition();
-				if ((disposition != null) && ((disposition.equals(Part.ATTACHMENT)) || (disposition.equals(Part.INLINE))))
-					attachFlag = true;
-				else if (mpart.isMimeType("multipart/*")) {
-					attachFlag = isContainAttach((Part) mpart);
-				} else {
-					String contype = mpart.getContentType();
-					if (contype.toLowerCase().indexOf("application") != -1)
-						attachFlag = true;
-					if (contype.toLowerCase().indexOf("name") != -1)
-						attachFlag = true;
-				}
-			}
-		} else if (part.isMimeType("message/rfc822")) {
-			attachFlag = isContainAttach((Part) part.getContent());
-		}
-		return attachFlag;
-	}
-
-	/**
-	 * 【保存附件】
-	 */
-	public void saveAttachment(Part part) throws Exception {
-		String fileName = "";
-		if (part.isMimeType("multipart/*")) {
-			Multipart mp = (Multipart) part.getContent();
-			for (int i = 0; i < mp.getCount(); i++) {
-				BodyPart mpart = mp.getBodyPart(i);
-				String disposition = mpart.getDisposition();
-				if ((disposition != null) && ((disposition.equals(Part.ATTACHMENT)) || (disposition.equals(Part.INLINE)))) {
-					fileName = mpart.getFileName();
-					if (fileName.toLowerCase().indexOf("gb2312") != -1 || fileName.toLowerCase().indexOf("gb18030") != -1|| fileName.toLowerCase().indexOf("gbk") != -1) {
-						fileName = MimeUtility.decodeText(fileName);
-					}
-					fileName = "附件" + fileName;
-					fileName = replaceIllegalCharacters(fileName);
-					saveFile(fileName, mpart.getInputStream());
-				} else if (mpart.isMimeType("multipart/*")) {
-					saveAttachment(mpart);
-				} else {
-					fileName = mpart.getFileName();
-					if ((fileName != null) && (fileName.toLowerCase().indexOf("GB2312") != -1)) {
-						fileName = MimeUtility.decodeText(fileName);
-						fileName = "附件" + fileName;
-						fileName = replaceIllegalCharacters(fileName);
-						saveFile(fileName, mpart.getInputStream());
-					}
-				}
-			}
-		} else if (part.isMimeType("message/rfc822")) {
-			saveAttachment((Part) part.getContent());
-		}
-	}
-
-	/**
-	 * 【设置附件存放路径】
-	 */
-
-	public void setAttachPath(String attachpath) {
-		this.saveAttachPath = attachpath;
-	}
-
-	/**
 	 * 【设置日期显示格式】
 	 */
 	public void setDateFormat(String format) throws Exception {
@@ -257,57 +211,9 @@ public class ReceiveMail {
 	}
 
 	/**
-	 * 【获得附件存放路径】
+	 * 本类入口
 	 */
-	public String getAttachPath() {
-		return saveAttachPath;
-	}
-
-	/**
-	 * 【真正的保存附件到指定目录里】
-	 */
-	private void saveFile(String fileName, InputStream in) throws Exception {
-		String osName = System.getProperty("os.name");
-		String storeDir = getAttachPath();
-		String separator = "";
-		if (osName == null)
-			osName = "";
-		if (osName.toLowerCase().indexOf("win") != -1) {
-			separator = "\\";
-			if (storeDir == null || storeDir.equals(""))
-				storeDir = "E:\\receive";
-		} else {
-			separator = "/";
-			storeDir = "/tmp";
-		}
-		File storeFolder = new File(storeDir);
-		storeFolder.mkdirs();
-		File storeFile = new File(storeDir + separator + fileName);
-		System.out.println("storefile's path: " + storeFile.toString());
-		BufferedOutputStream bos = null;
-		BufferedInputStream bis = null;
-		try {
-			bos = new BufferedOutputStream(new FileOutputStream(storeFile));
-			bis = new BufferedInputStream(in);
-			int c;
-			while ((c = bis.read()) != -1) {
-				bos.write(c);
-				bos.flush();
-			}
-		} catch (Exception exception) {
-			exception.printStackTrace();
-			throw new Exception("文件保存失败!");
-		} finally {
-			bos.close();
-			bis.close();
-		}
-	}
-
-	/**
-	 * PraseMimeMessage类测试
-	 */
-	public static void loginAndReceiveMail(LoginInformation li) throws Exception {
-
+	public void loginAndReceiveMail(LoginInformation li) throws Exception {
 		String smtpServerAddress = li.getSmtpServerName();
 		String pop3ServerAddress = li.getPop3ServerName();
 		String userName = li.getUserName();
@@ -320,10 +226,14 @@ public class ReceiveMail {
 		folder.open(Folder.READ_ONLY);
 		Message message[] = folder.getMessages();
 		System.out.println("Messages's length: " + message.length);
+		receiveAndSaveMails(message);
+	}
+
+	private void receiveAndSaveMails(Message[] message) throws MessagingException, Exception {
 		ReceiveMail pmm = null;
 		for (int i = 0; i < message.length; i++) {
 			pmm = new ReceiveMail((MimeMessage) message[i]);
-			saveNewMail(message, pmm, i);
+			pmm.mailSaver.saveMail(message, pmm, i);
 		}
 	}
 
@@ -340,83 +250,15 @@ public class ReceiveMail {
 		return store;
 	}
 	
-	private static void saveNewMail(Message[] message, ReceiveMail pmm, int i) throws MessagingException, Exception {
-		String subjectName = pmm.getSubject();
-		int subjectNameLength = 20;
-		subjectName = replaceIllegalCharacters(subjectName);
-		subjectName = subjectName.length() < subjectNameLength ? subjectName : subjectName.substring(0, subjectNameLength);
-		String singleMailFolderPath = filePathPrefix + subjectName;
-		makeFolder(singleMailFolderPath);
-		String filePath = singleMailFolderPath + File.separator + subjectName + ".txt";
-
-		System.out.println(filePath);
-		pmm.initDos(filePath);
-		pmm.setAttachPath(singleMailFolderPath);
-		pmm.saveMail(message, pmm, i);
-		pmm.closeDos();
-	}
-
-	private static String replaceIllegalCharacters(String subjectName) {
-		char[] illegalCharacters = { ':', '/', '\\', '?', '*', '<', '>', '|', '\"',' ' };
-		for (char ch : illegalCharacters) {
-			subjectName = subjectName.replace(ch, '_');
-		}
-		return subjectName;
-	}
-
-	private static void makeFolder(String folderPath) {
-		File folder = new File(folderPath);
-		folder.mkdirs();
-	}
-
-	private void initDos(String filePath) {
-
-		File file = new File(filePath);
-		try {
-			if (!file.exists()) {
-				file.createNewFile();
-			}
-			fw = new FileWriter(file);
-			bw = new BufferedWriter(fw);
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
-	private void saveMail(Message[] message, ReceiveMail pmm, int i) throws MessagingException, Exception {
-		writeLine("subject: " + pmm.getSubject() + "\n");
-		System.out.println(pmm.getSubject());
-		writeLine("sentdate: " + pmm.getSentDate() + "\n");
-		writeLine("form: " + pmm.getFrom() + "\n");
-		writeLine("to: " + pmm.getMailAddress("to") + "\n");
-		pmm.setDateFormat("yy年MM月dd日 HH:mm");
-		writeLine("sentdata: " + pmm.getSentDate() + "\n");
-		pmm.getMailContent((Part) message[i]);
-		writeLine("content: " + pmm.getBodyText() + "\n");
-		pmm.saveAttachment((Part) message[i]);
-	}
-
-	private void closeDos() {
-		try {
-			bw.close();
-			fw.close();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} finally {
-			bw = null;
-			fw = null;
-		}
-	}
-
-	private void writeLine(String str) {
-		try {
-			bw.write(str, 0, str.length());
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-
 	public static void setFilePathPrefix(String filePathPrefix) {
 		ReceiveMail.filePathPrefix = filePathPrefix;
+	}
+
+	public static String getFilePathPrefix() {
+		return filePathPrefix;
+	}
+
+	public MailSaver getMailSaver() {
+		return mailSaver;
 	}
 }

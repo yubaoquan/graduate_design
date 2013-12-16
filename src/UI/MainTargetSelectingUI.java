@@ -79,7 +79,7 @@ public class MainTargetSelectingUI {
 		private void onReceiveOptionSelected() {
 			System.out.println("receive");
 			try {
-				ReceiveMail.loginAndReceiveMail(loginInformation);
+				new ReceiveMail().loginAndReceiveMail(loginInformation);
 			} catch (Exception e) {
 				e.printStackTrace();
 			}
