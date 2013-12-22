@@ -244,11 +244,9 @@ public class EditMailUI {
 		}
 		
 		private void onSendButtonClick() {
-			LoginUtils.showWaitingWindow("sending mail");
 			fillMail();
 			Transmitter.getInstance(loginInformation).sendMail(mail);
 			if (Transmitter.getInstance(loginInformation).sendSucceed()) {
-				LoginUtils.hideWaitingWindow();
 				int option = JOptionPane.showConfirmDialog(frame, (String) "发送成功,是否再发一个.", "已发送", JOptionPane.YES_NO_OPTION);
 				switch (option) {
 					case 0:

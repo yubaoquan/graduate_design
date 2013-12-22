@@ -45,12 +45,12 @@ public class LoginUI {
 	}
 	
 	public void initUI() {
-		setAttributes();
+		configure();
 		addComponents();
 		frame.setVisible(true);
 	}
 
-	private void setAttributes() {
+	private void configure() {
 		configureFrame();
 		configurePanels();
 		configureOthercomponents();
@@ -136,15 +136,14 @@ public class LoginUI {
 		}
 
 		private void onConfirmButtonClick() {
-			fillLoginInformation();
 			if (!informationValid()) {
 				return;
 			}
+			fillLoginInformation();
 			LoginUtils.loginToServer(loginInformation);
 			if (LoginUtils.loginServerSucceed(loginInformation)) {
 				LoginUtils.selectSendOrReceive(LoginUI.this);
 			} else {
-				LoginUtils.hideWaitingWindow();
 				JOptionPane.showMessageDialog(frame, (String)"登录失败.请确认用户名和密码填写正确并且网络连接正常.", "错误", JOptionPane.WARNING_MESSAGE);
 			}
 		}
