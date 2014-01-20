@@ -53,7 +53,7 @@ public class MailSaver {
 		setAttachPath(singleMailFolderPath);
 		System.out.println("set attachpath:" + singleMailFolderPath); 
 		System.out.println(filePath);
-		saveMailUseWriter(message, receiveMailBean, i, filePath);
+		saveMailByWriter(message, receiveMailBean, i, filePath);
 	}
 	
 	private String getSingleMailFolderPath(ReceiveMail receiveMailBean) throws Exception {
@@ -83,7 +83,7 @@ public class MailSaver {
 		folder.mkdirs();
 	}
 	
-	public void saveMailUseWriter(Message[] message, ReceiveMail receiveMailBean, int i, String filePath) throws Exception, MessagingException {
+	public void saveMailByWriter(Message[] message, ReceiveMail receiveMailBean, int i, String filePath) throws Exception, MessagingException {
 		fileWriterSaver = new FileWriterSaver(filePath);
 		fileWriterSaver.saveMailContents(message, receiveMailBean, i);
 		fileWriterSaver.closeWriter();

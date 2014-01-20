@@ -11,7 +11,14 @@ public class LoginThread extends Thread{
 	@Override
 	public void run() {
 		loginUI.initUI();
-		
 	}
 
+	/**
+	 * @param args
+	 */
+	public static void main(String[] args) {
+		LoginUI loginUI = new LoginUI();
+		LoginThread thread1 = new LoginThread(loginUI);
+		thread1.start();
+	}
 }

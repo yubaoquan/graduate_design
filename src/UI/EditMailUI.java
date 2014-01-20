@@ -209,7 +209,7 @@ public class EditMailUI {
 		}
 
 		private void onAddExtraItemButtonClick() {
-			JFileChooser fc = new JFileChooser();//fc.set
+			JFileChooser fc = new JFileChooser();// fc.set
 			fc.setDialogTitle("选择附件");
 			fc.showDialog(frame, "选择");
 			File extraItemFile = fc.getSelectedFile();
@@ -226,9 +226,9 @@ public class EditMailUI {
 		private void changeExtraItemNameLabel(File extraItemFile) {
 			StringBuffer text = new StringBuffer(extraItemNameLabel.getText());
 			String extraItemFileName = extraItemFile.getName();
-			int shortNameLength = extraItemFileName.length() > 10 ? 10:extraItemFileName.length();
-			String shortFileName = extraItemFile.getName().substring(0,shortNameLength) + "..,";
-			
+			int shortNameLength = extraItemFileName.length() > 10 ? 10 : extraItemFileName.length();
+			String shortFileName = extraItemFile.getName().substring(0, shortNameLength) + "..,";
+
 			if (mail.getExtraItemsAmount() == mail.EXTRA_ITEM_CAPACITY - 1) {
 				shortFileName = shortFileName.substring(0, shortFileName.length() - 1);
 			}
@@ -236,28 +236,30 @@ public class EditMailUI {
 			extraItemNameLabel.setText(new String(text));
 		}
 
-
 		private void onRemoveExtraItemButtonClick() {
 			mail.removeAllExtraItems();
 			extraItemNameLabel.setText("附件:");
 			addExtraItemButton.setEnabled(true);
 		}
-		
+
 		private void onSendButtonClick() {
-			fillMail();
-			Transmitter.getInstance(loginInformation).sendMail(mail);
-			if (Transmitter.getInstance(loginInformation).sendSucceed()) {
-				int option = JOptionPane.showConfirmDialog(frame, (String) "发送成功,是否再发一个.", "已发送", JOptionPane.YES_NO_OPTION);
-				switch (option) {
-					case 0:
-						resend();
-						break;
-					case 1:
-						terminate();
-						break;
-					default:
-						System.out.println("error");
-						break;
+
+			if (fillMail()) {
+
+				Transmitter.getInstance(loginInformation).sendMail(mail);
+				if (Transmitter.getInstance(loginInformation).sendSucceed()) {
+					int option = JOptionPane.showConfirmDialog(frame, (String) "发送成功,是否再发一个.", "已发送", JOptionPane.YES_NO_OPTION);
+					switch (option) {
+						case 0:
+							resend();
+							break;
+						case 1:
+							terminate();
+							break;
+						default:
+							System.out.println("error");
+							break;
+					}
 				}
 			}
 		}
@@ -277,7 +279,7 @@ public class EditMailUI {
 			System.exit(0);
 		}
 
-		private void fillMail() {
+		private boolean fillMail() {
 			String receiverAddress = EditMailUI.this.receiverAddressTextField.getText();
 			String subject = EditMailUI.this.subjectTextField.getText();
 			String text = EditMailUI.this.mainTextArea.getText();
@@ -286,9 +288,10 @@ public class EditMailUI {
 				receiversAddressArray[0] = new InternetAddress(receiverAddress);
 			} catch (AddressException e) {
 				System.out.println("wrong address");
-				JOptionPane.showMessageDialog(frame, (String)"收信人地址填写不正确,请检查后重新输入.", "错误", JOptionPane.WARNING_MESSAGE);
+				JOptionPane.showMessageDialog(frame, (String) "收信人地址填写不正确,请检查后重新输入.", "错误", JOptionPane.WARNING_MESSAGE);
 				mail = new MailBean();
-				extraItemNameLabel.setText("附件:");
+				//extraItemNameLabel.setText("附件:");
+				return false;
 			}
 			mail.setSubject(subject);
 			mail.setText(text);
@@ -296,6 +299,7 @@ public class EditMailUI {
 				mail.addExtraItemsToMultipart();
 			}
 			mail.setReceiverAddresses(receiversAddressArray);
+			return true;
 		}
 	}
 }

@@ -7,6 +7,9 @@ import beans.LoginInformation;
 public class LoginUtils {
 
 	public static boolean loginInformationValid(LoginInformation loginInformation) {
+		if (loginInformation == null) {
+			System.out.println("loginInformation == null");
+		}
 		if (loginInformation.getUserName().trim().equals("")) {
 			return false;
 		}

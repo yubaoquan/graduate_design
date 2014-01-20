@@ -106,14 +106,7 @@ public class LoginUI {
 		frame.add(southPanel, BorderLayout.SOUTH);
 	}
 
-	/**
-	 * @param args
-	 */
-	public static void main(String[] args) {
-		LoginUI loginUI = new LoginUI();
-		LoginThread thread1 = new LoginThread(loginUI);
-		thread1.run();
-	}
+	
 
 	private class LoginUIMonitor implements ActionListener {
 		@Override
@@ -136,10 +129,10 @@ public class LoginUI {
 		}
 
 		private void onConfirmButtonClick() {
+			fillLoginInformation();
 			if (!informationValid()) {
 				return;
 			}
-			fillLoginInformation();
 			LoginUtils.loginToServer(loginInformation);
 			if (LoginUtils.loginServerSucceed(loginInformation)) {
 				LoginUtils.selectSendOrReceive(LoginUI.this);

@@ -1,19 +1,12 @@
 package net;
 
 import io.MailSaver;
-import io.FileStreamSaver;
-import io.FileWriterSaver;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.InputStream;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
-import javax.mail.BodyPart;
 import javax.mail.Flags;
 import javax.mail.Folder;
 import javax.mail.Message;
@@ -39,8 +32,6 @@ public class ReceiveMail {
 	private StringBuffer bodyText = new StringBuffer();// 存放邮件内容
 	private String dateFormat = "yy-MM-dd HH:mm"; // 默认的日前显示格式
 	private static String filePathPrefix;
-	private FileStreamSaver fileStreamSaver = null;
-	private FileWriterSaver fileWriterSaver = null;
 	private MailSaver mailSaver = new MailSaver();
 	
 	public ReceiveMail(MimeMessage mimeMessage) {
@@ -127,8 +118,17 @@ public class ReceiveMail {
 	/**
 	 * 获得邮件发送日期
 	 */
-	public String getSentDate() throws Exception {
-		Date sentdate = mimeMessage.getSentDate();
+	public String getSentDate() {
+		Date sentdate = null;
+		try {
+			//如果这个message没有被擦除，确保不抛出
+			if (!mimeMessage.isExpunged()) {
+				sentdate = mimeMessage.getSentDate();
+			}
+		} catch (MessagingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 		SimpleDateFormat format = new SimpleDateFormat(dateFormat);
 		return format.format(sentdate);
 	}
@@ -224,14 +224,18 @@ public class ReceiveMail {
 
 		Folder folder = store.getFolder("INBOX");
 		folder.open(Folder.READ_ONLY);
-		Message message[] = folder.getMessages();
-		System.out.println("Messages's length: " + message.length);
-		receiveAndSaveMails(message);
+		Message[] messages = folder.getMessages();
+		System.out.println("Messages's length: " + messages.length);
+		receiveAndSaveMails(messages);
 	}
 
 	private void receiveAndSaveMails(Message[] message) throws MessagingException, Exception {
 		ReceiveMail pmm = null;
 		for (int i = 0; i < message.length; i++) {
+			//如果这个message被擦除了，则跳过
+			if (message[i].isExpunged()) {
+				continue;
+			}
 			pmm = new ReceiveMail((MimeMessage) message[i]);
 			pmm.mailSaver.saveMail(message, pmm, i);
 		}
