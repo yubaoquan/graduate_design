@@ -150,13 +150,17 @@ public class ReceiveMail {
 		if (nameIndex != -1)
 			conname = true;
 		System.out.println("CONTENTTYPE: " + contentType);
+		
 		if (part.isMimeType("text/plain") && !conname) {
 			bodyText.append((String) part.getContent());
+			
 		} else if (part.isMimeType("text/html") && !conname) {
 			bodyText.append((String) part.getContent());
+			
 		} else if (part.isMimeType("multipart/*")) {
 			Multipart multipart = (Multipart) part.getContent();
 			int counts = multipart.getCount();
+			
 			for (int i = 0; i < counts; i++) {
 				getMailContent(multipart.getBodyPart(i));
 			}

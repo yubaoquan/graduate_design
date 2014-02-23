@@ -266,14 +266,20 @@ public class EditMailUI {
 
 		private void resend() {
 			cleanForm();
+			cleanMailBean();
 		}
 
 		private void cleanForm() {
 			EditMailUI.this.receiverAddressTextField.setText("");
 			EditMailUI.this.subjectTextField.setText("");
 			EditMailUI.this.mainTextArea.setText("");
+			EditMailUI.this.extraItemNameLabel.setText("附件：");
 		}
-
+		
+		private void cleanMailBean() {
+			mail = new MailBean();
+		}
+		
 		private void terminate() {
 			Transmitter.getInstance(loginInformation).closeConnection();
 			System.exit(0);
